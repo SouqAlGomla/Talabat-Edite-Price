@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معالج ملفات الأصناف</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>معالج ملفات الأصناف</h1>
+            <p>قم برفع ملف Excel لمعالجة بيانات الأصناف</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p>اسحب وأفلت ملف Excel هنا أو انقر للاختيار</p>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+                <button type="button" onclick="document.getElementById('fileInput').click()">اختر الملف</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>جاري معالجة البيانات...</p>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h2>النتائج</h2>
+                <button class="download-btn" id="downloadBtn" onclick="downloadExcel()">
+                    <span class="download-icon">⬇️</span>
+                    تحميل ملف Excel
+                </button>
+            </div>
+            <div class="stats" id="stats"></div>
+            <div class="table-container">
+                <div class="table-instructions">
+                    <p><strong>تعليمات الاستخدام:</strong> اضغط مرة أو مرتين لنسخ الرقم • اضغط 3 مرات على السعر لتعديله</p>
+                </div>
+                <div class="table-wrapper">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>كود الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>سعر الوحدة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="notification" id="notification"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
