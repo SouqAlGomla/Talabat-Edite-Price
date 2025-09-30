@@ -91,10 +91,11 @@ class ExcelProcessor {
 
         // Skip header row
         const dataRows = this.originalData.slice(1);
-        this.processedData = [];
-
+        
+        // Use Map to track latest occurrence of each item code
+        const itemCodeMap = new Map();
         let removedCount = 0;
-        let priceIncreasedCount = 0;
+        let duplicateCount = 0;
 
         dataRows.forEach((row, index) => {
             try {
@@ -111,40 +112,62 @@ class ExcelProcessor {
                     return;
                 }
 
-                // Calculate new price with different percentages based on original price
-                let newPrice = unitPrice;
-                let priceIncreased = false;
-                let percentage = 0;
-
-                // Add percentage if section is not 52
-                if (section != 52) {
-                    if (unitPrice >= 150) {
-                        percentage = 7; // 7% for prices >= 150
-                        newPrice = unitPrice * 1.07;
-                    } else {
-                        percentage = 7.5; // 7.5% for prices < 150
-                        newPrice = unitPrice * 1.075;
-                    }
-                    priceIncreased = true;
-                    priceIncreasedCount++;
+                // If this item code already exists, mark the previous one as duplicate
+                if (itemCodeMap.has(itemCode)) {
+                    duplicateCount++;
                 }
 
-                // Apply custom rounding
-                newPrice = this.customRound(newPrice);
-
-                this.processedData.push({
+                // Always keep the latest occurrence (overwrite if exists)
+                itemCodeMap.set(itemCode, {
                     itemCode: itemCode || '',
                     itemName: itemName || '',
                     originalPrice: unitPrice,
-                    newPrice: newPrice,
-                    priceIncreased: priceIncreased,
+                    unit: unit,
                     section: section,
-                    percentage: percentage,
-                    index: this.processedData.length // Add index for tracking
+                    rowIndex: index + 2 // +2 because we skipped header and arrays are 0-indexed
                 });
+
             } catch (error) {
                 console.warn(`خطأ في السطر ${index + 2}:`, error);
             }
+        });
+
+        // Process the final unique items
+        this.processedData = [];
+        let priceIncreasedCount = 0;
+
+        itemCodeMap.forEach((item) => {
+            // Calculate new price with different percentages based on original price
+            let newPrice = item.originalPrice;
+            let priceIncreased = false;
+            let percentage = 0;
+
+            // Add percentage if section is not 52
+            if (item.section != 52) {
+                if (item.originalPrice >= 150) {
+                    percentage = 7; // 7% for prices >= 150
+                    newPrice = item.originalPrice * 1.07;
+                } else {
+                    percentage = 7.5; // 7.5% for prices < 150
+                    newPrice = item.originalPrice * 1.075;
+                }
+                priceIncreased = true;
+                priceIncreasedCount++;
+            }
+
+            // Apply custom rounding
+            newPrice = this.customRound(newPrice);
+
+            this.processedData.push({
+                itemCode: item.itemCode,
+                itemName: item.itemName,
+                originalPrice: item.originalPrice,
+                newPrice: newPrice,
+                priceIncreased: priceIncreased,
+                section: item.section,
+                percentage: percentage,
+                index: this.processedData.length // Add index for tracking
+            });
         });
 
         // Calculate percentage statistics
@@ -154,6 +177,7 @@ class ExcelProcessor {
         this.stats = {
             total: this.processedData.length,
             removed: removedCount,
+            duplicates: duplicateCount,
             priceIncreased: priceIncreasedCount,
             originalTotal: dataRows.length,
             sevenPercent: sevenPercentCount,
@@ -220,11 +244,15 @@ class ExcelProcessor {
             </div>
             <div class="stat-item">
                 <span class="stat-number">${this.stats.removed}</span>
-                <div class="stat-label">السطور المحذوفة</div>
+                <div class="stat-label">السطور المحذوفة (وحدة ≠ 1)</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">${this.stats.duplicates}</span>
+                <div class="stat-label">الأكواد المكررة المحذوفة</div>
             </div>
             <div class="stat-item">
                 <span class="stat-number">${this.stats.total}</span>
-                <div class="stat-label">السطور المعروضة</div>
+                <div class="stat-label">السطور المعروضة النهائية</div>
             </div>
             <div class="stat-item">
                 <span class="stat-number">${this.stats.sevenPercent}</span>
@@ -270,7 +298,11 @@ class ExcelProcessor {
         // Show results section
         document.getElementById('resultsSection').style.display = 'block';
         
-        this.showNotification(`تم معالجة ${this.stats.total} صنف بنجاح`, 'success');
+        let successMessage = `تم معالجة ${this.stats.total} صنف بنجاح`;
+        if (this.stats.duplicates > 0) {
+            successMessage += ` (تم حذف ${this.stats.duplicates} كود مكرر)`;
+        }
+        this.showNotification(successMessage, 'success');
     }
 
     showLoading(show) {
