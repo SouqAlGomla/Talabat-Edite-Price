@@ -277,12 +277,12 @@ class ExcelProcessor {
             
             row.innerHTML = `
                 <td>
-                    <span class="clickable" onclick="copyToClipboard('${item.itemCode}', this)">
+                    <span class="clickable item-code" data-row-index="${index}" onclick="copyItemCode('${item.itemCode}', this, ${index})">
                         ${item.itemCode}
                     </span>
                 </td>
                 <td>
-                    <span class="clickable" onclick="copyToClipboard('${item.itemName}', this)">
+                    <span class="item-name" data-row-index="${index}">
                         ${item.itemName}
                     </span>
                 </td>
@@ -368,7 +368,69 @@ let clickCounts = {};
 // Global variable to access processor instance
 let processorInstance = null;
 
-// Copy to clipboard function with visual feedback
+// Copy item code function with special behavior
+function copyItemCode(itemCode, element, rowIndex) {
+    // Copy to clipboard
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(itemCode).then(() => {
+            showCopyNotification('تم نسخ كود الصنف: ' + itemCode);
+            addItemCodeVisualFeedback(element, rowIndex);
+        }).catch(err => {
+            console.error('فشل في النسخ:', err);
+            fallbackCopyTextToClipboard(itemCode, element);
+            addItemCodeVisualFeedback(element, rowIndex);
+        });
+    } else {
+        fallbackCopyTextToClipboard(itemCode, element);
+        addItemCodeVisualFeedback(element, rowIndex);
+    }
+}
+
+// Special visual feedback for item code clicks
+function addItemCodeVisualFeedback(element, rowIndex) {
+    // Apply copied class to item code
+    element.classList.add('copied');
+    
+    // Find and apply copied class to item name in the same row
+    const itemNameElement = document.querySelector(`[data-row-index="${rowIndex}"].item-name`);
+    if (itemNameElement) {
+        itemNameElement.classList.add('copied');
+    }
+    
+    // Create temporary indicator on the clicked element
+    const indicator = document.createElement('span');
+    indicator.className = 'copy-indicator';
+    indicator.innerHTML = '✅';
+    indicator.style.cssText = `
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: var(--success-color);
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        z-index: 100;
+        animation: copyPulse 0.6s ease-out;
+    `;
+    
+    // Add indicator to the clicked element
+    element.style.position = 'relative';
+    element.appendChild(indicator);
+    
+    // Remove indicator after animation but keep the 'copied' class permanently
+    setTimeout(() => {
+        if (indicator.parentNode) {
+            indicator.parentNode.removeChild(indicator);
+        }
+    }, 1000);
+}
+
+// Copy to clipboard function with visual feedback  
 function copyToClipboard(text, element = null) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
@@ -567,21 +629,10 @@ document.addEventListener('DOMContentLoaded', () => {
     processorInstance = new ExcelProcessor();
 });
 
-// Add visual feedback for copy action - permanent until page refresh
+// Add visual feedback for copy action - permanent until page refresh (for prices only)
 function addCopyVisualFeedback(element) {
-    // Find the parent row (tr element)
-    const row = element.closest('tr');
-    
-    if (row) {
-        // Apply copied class to all clickable elements in the row
-        const clickableElements = row.querySelectorAll('.clickable');
-        clickableElements.forEach(clickableElement => {
-            clickableElement.classList.add('copied');
-        });
-    } else {
-        // Fallback: only apply to the clicked element
-        element.classList.add('copied');
-    }
+    // Apply copied class only to the clicked element (price)
+    element.classList.add('copied');
     
     // Create temporary indicator on the clicked element
     const indicator = document.createElement('span');
