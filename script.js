@@ -281,7 +281,11 @@ class ExcelProcessor {
                         ${item.itemCode}
                     </span>
                 </td>
-                <td>${item.itemName}</td>
+                <td>
+                    <span class="clickable" onclick="copyToClipboard('${item.itemName}', this)">
+                        ${item.itemName}
+                    </span>
+                </td>
                 <td>
                     <span class="clickable ${priceClass} price-cell" 
                           data-index="${index}" 
