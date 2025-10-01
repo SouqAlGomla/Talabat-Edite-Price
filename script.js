@@ -165,9 +165,26 @@ class ExcelProcessor {
                 newPrice: newPrice,
                 priceIncreased: priceIncreased,
                 section: item.section,
+                unit: item.unit, // Add unit information
                 percentage: percentage,
                 index: this.processedData.length // Add index for tracking
             });
+        });
+
+        // Sort the processed data: Unit 1 first (by price), then Unit 4 (by price)
+        this.processedData.sort((a, b) => {
+            // First, sort by unit (1 comes before 4)
+            if (a.unit !== b.unit) {
+                return a.unit - b.unit; // 1 will come before 4
+            }
+            
+            // If same unit, sort by price (ascending - from smallest to largest)
+            return a.newPrice - b.newPrice;
+        });
+
+        // Reassign indices after sorting
+        this.processedData.forEach((item, index) => {
+            item.index = index;
         });
 
         // Calculate percentage statistics
