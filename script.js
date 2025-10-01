@@ -106,8 +106,8 @@ class ExcelProcessor {
                 const unit = row[3]; // الوحدة
                 const section = row[8]; // القسم
 
-                // Skip rows where unit is not 1
-                if (unit != 1) {
+                // Skip rows where unit is not 1 or 4
+                if (unit != 1 && unit != 4) {
                     removedCount++;
                     return;
                 }
@@ -244,7 +244,7 @@ class ExcelProcessor {
             </div>
             <div class="stat-item">
                 <span class="stat-number">${this.stats.removed}</span>
-                <div class="stat-label">السطور المحذوفة (وحدة ≠ 1)</div>
+                <div class="stat-label">السطور المحذوفة (وحدة ≠ 1 أو 4)</div>
             </div>
             <div class="stat-item">
                 <span class="stat-number">${this.stats.duplicates}</span>
