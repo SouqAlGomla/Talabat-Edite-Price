@@ -569,10 +569,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add visual feedback for copy action - permanent until page refresh
 function addCopyVisualFeedback(element) {
-    // Add permanent copy indicator
-    element.classList.add('copied');
+    // Find the parent row (tr element)
+    const row = element.closest('tr');
     
-    // Create temporary indicator
+    if (row) {
+        // Apply copied class to all clickable elements in the row
+        const clickableElements = row.querySelectorAll('.clickable');
+        clickableElements.forEach(clickableElement => {
+            clickableElement.classList.add('copied');
+        });
+    } else {
+        // Fallback: only apply to the clicked element
+        element.classList.add('copied');
+    }
+    
+    // Create temporary indicator on the clicked element
     const indicator = document.createElement('span');
     indicator.className = 'copy-indicator';
     indicator.innerHTML = '✅';
@@ -593,7 +604,7 @@ function addCopyVisualFeedback(element) {
         animation: copyPulse 0.6s ease-out;
     `;
     
-    // Add indicator to element
+    // Add indicator to the clicked element
     element.style.position = 'relative';
     element.appendChild(indicator);
     
